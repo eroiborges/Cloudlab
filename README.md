@@ -18,3 +18,6 @@ AZCli versions used:
 
 1. [Azure networking routing using a HUB & Spoke + VPN.](./netlab/lab1.md).
 
+## Code Folder
+
+There are some script, container image or anything that can help in a LAB or Tshooting cenario.
