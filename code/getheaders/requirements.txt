@@ -1,0 +1,9 @@
+# Core dependencies for getheader troubleshooting service
+flask==2.3.3
+flask-restx==1.3.0
+gunicorn==21.2.0
+
+# Additional dependencies for production
+# Uncomment if needed:
+# requests==2.31.0      # For making HTTP calls if needed
+# python-json-logger==2.0.7  # For structured logging

@@ -1,0 +1,5 @@
+lib64
+/usr
+/bin
+/etc
+*.log
