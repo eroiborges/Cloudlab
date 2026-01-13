@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: getheader
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: "production-rg"
+spec:
+  type: LoadBalancer
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800

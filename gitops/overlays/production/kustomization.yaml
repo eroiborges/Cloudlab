@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace para produção
+namespace: getheader-production
+
+# Usar recursos da base
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Prefixo para todos os recursos
+namePrefix: prod-
+
+# Labels comuns para todos os recursos
+commonLabels:
+  environment: production
+  tier: frontend
+
+# Annotations comuns
+commonAnnotations:
+  managed-by: kustomize
+  environment: production
+
+# Patches para ajustar configurações específicas de produção
+patches:
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: getheader
+  - path: service-patch.yaml
+    target:
+      kind: Service
+      name: getheader
+
+# Replica count para produção
+replicas:
+  - name: getheader
+    count: 3
+
+# Imagens para produção (pode ser sobrescrita via CI/CD)
+images:
+  - name: rsykba1j6kcp6.azurecr.io/getheader-backend
+    newTag: v2
