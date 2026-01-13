@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: getheader
+  name: getheader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: getheader
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: getheader
+    spec:
+      containers:
+      - image: rsykba1j6kcp6.azurecr.io/getheader-backend:v2
+        name: getheader
+        resources: {}
+status: {}
