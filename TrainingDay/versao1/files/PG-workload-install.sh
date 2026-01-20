@@ -33,7 +33,7 @@ sudo systemctl restart postgresql.service
 sudo setsebool -P httpd_can_network_connect_db 1
 
 # bring down Northwind database
-curl https://23qt08bkeft5g.z20.web.core.windows.net/northwind.sql -o ~/northwind.sql
+curl https://raw.githubusercontent.com/eroiborges/Cloudlab/refs/heads/main/TrainingDay/versao1/files/northwind.sql -o ~/northwind.sql
 
 # Create User and database
 sudo -u postgres psql -c "CREATE USER demouser WITH PASSWORD 'demopass123';"
