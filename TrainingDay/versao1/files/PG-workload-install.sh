@@ -126,18 +126,32 @@ BEGIN
 END
 \$\$;"
 
-# northwind DB
-sudo -u postgres psql -v ON_ERROR_STOP=1 -c "
-DO \$\$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'northwind') THEN
-    CREATE DATABASE northwind OWNER demouser;
-  END IF;
-END
-\$\$;"
+
+# northwind DB (fora de DO; idempotente no shell)
+if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='northwind'" | grep -q 1; then
+  echo "[INFO] Criando database northwind (owner=demouser)..."
+  sudo -u postgres createdb -O demouser northwind
+else
+  echo "[INFO] Database northwind já existe; seguindo."
+fi
 
 # Carga Northwind (só se vazio)
 echo "[INFO] Carregando Northwind se necessário..."
 if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='customers';" northwind | grep -q 1; then
   sudo -u postgres psql -v ON_ERROR_STOP=1 -d northwind -f "${NORTHWIND_SQL}"
 else
+  echo "[INFO] Northwind já possui dados; pulando carga."
+fi
+
+# Grants e defaults
+echo "[INFO] Aplicando GRANTs..."
+sudo -u postgres psql -d northwind -v ON_ERROR_STOP=1 -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO demouser;"
+sudo -u postgres psql -d northwind -v ON_ERROR_STOP=1 -c "GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA public TO demouser;"
+sudo -u postgres psql -d northwind -v ON_ERROR_STOP=1 -c "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO demouser;"
+
+echo "[INFO] Defaults (futuros objetos)..."
+sudo -u postgres psql -d northwind -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO demouser;"
+sudo -u postgres psql -d northwind -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, USAGE ON SEQUENCES TO demouser;"
+sudo -u postgres psql -d northwind -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO demouser;"
+
+echo "[OK] Finalizado com sucesso."
