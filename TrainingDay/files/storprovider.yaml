@@ -1,0 +1,26 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: csikv-aks
+  namespace: default
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: "false"
+    useVMManagedIdentity: "true"          # Set to true for using managed identity
+    userAssignedIdentityID: 594ff699-2d7e-4ee7-a145-eb2207d07e80   # Set the clientID of the user-assigned managed identity to use
+    keyvaultName: lztkz3e3zwj8d        # Set to the name of your key vault
+    cloudName: ""                         # [OPTIONAL for Azure] if not provided, the Azure environment defaults to AzurePublicCloud
+    objects:  |
+      array:
+        - |
+          objectName: ExampleSecret
+          objectType: secret              # object types: secret, key, or cert
+          objectVersion: ""               # [OPTIONAL] object versions, default to latest if empty
+    tenantId: 16b3c013-d300-468d-ac64-7eda0820b6d3
+  secretObjects:
+  - secretName: secret-examplesecret
+    type: Opaque
+    data: 
+    - objectName: ExampleSecret
+      key: secret
