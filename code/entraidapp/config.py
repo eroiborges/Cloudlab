@@ -19,7 +19,8 @@ class Config:
     OPTIONAL_VARS = {
         'APP_ENVIRONMENT': 'dev',
         'CUSTOM_FQDN': 'api.eroicloud.com.br',
-        'SESSION_TIMEOUT_MINUTES': '5'
+        'SESSION_TIMEOUT_MINUTES': '5',
+        'AZURE_CUSTOM_SCOPES': 'api://de741bd5-db77-4bb9-97ef-203ed8b0daa3/appcheck'
     }
     
     def __init__(self):
@@ -90,6 +91,14 @@ class Config:
             host = self.config.get('CUSTOM_FQDN')
         
         return f"{protocol}://{host}/auth/callback"
+    
+    def get_custom_scopes(self) -> List[str]:
+        """Get custom API scopes as a list."""
+        scopes_str = self.config.get('AZURE_CUSTOM_SCOPES', '')
+        if not scopes_str:
+            return []
+        # Support multiple scopes separated by spaces
+        return [scope.strip() for scope in scopes_str.split() if scope.strip()]
 
 # Global configuration instance
 app_config = Config()

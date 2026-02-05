@@ -16,9 +16,10 @@ Esta aplicação demo demonstra:
 
 - **Login Seguro**: Redirecionamento para Microsoft Entra ID para autenticação
 - **Perfil de Usuário**: Exibição das informações do usuário logado
-- **Tokens de Acesso**: Visualização e monitoramento dos tokens OAuth
+- **Tokens de Acesso**: Visualização detalhada dos tokens OAuth (ID Token, Microsoft Graph, APIs customizadas)
+- **Scopes Customizados**: Suporte para APIs customizadas configuráveis via ambiente
 - **Sessão Gerenciada**: Controle de sessão com timeout configurável
-- **Interface Responsiva**: Templates HTML com Bootstrap
+- **Interface Responsiva**: Templates HTML com Bootstrap e seções colapsáveis
 
 ## 🛠️ Pré-requisitos
 
@@ -55,6 +56,8 @@ FLASK_PORT=5000
 APP_ENVIRONMENT=dev
 SESSION_TIMEOUT_MINUTES=5
 CUSTOM_FQDN=localhost
+# Custom API Scopes - espaço separado (deixe vazio se não usar API customizada)
+AZURE_CUSTOM_SCOPES="api://seu-client-id/escopo1 api://seu-client-id/escopo2"
 ```
 
 > 📝 **Dica**: Use `python -c "import secrets; print(secrets.token_hex(32))"` para gerar uma chave secreta segura.
@@ -101,13 +104,62 @@ python app.py
 
 A aplicação estará disponível em: http://localhost:5000
 
+## 🔑 Configuração de Scopes Customizados
+
+A aplicação suporta APIs customizadas através da variável `AZURE_CUSTOM_SCOPES`:
+
+### Cenários de Uso
+
+#### 1. Apenas Microsoft Graph (padrão)
+```bash
+export AZURE_CUSTOM_SCOPES=""
+```
+**Resultado**: Exibe apenas ID Token + Microsoft Graph Token na página `/tokens`
+
+#### 2. Com API Customizada
+```bash
+export AZURE_CUSTOM_SCOPES="api://seu-app-id/read"
+```
+**Resultado**: Exibe ID Token + Microsoft Graph Token + Custom API Token
+
+#### 3. Múltiplos Scopes Customizados
+```bash
+export AZURE_CUSTOM_SCOPES="api://seu-app-id/read api://seu-app-id/write api://seu-app-id/admin"
+```
+**Resultado**: Token customizado com múltiplos scopes no campo `scp`
+
+### Configuração no Azure AD
+
+Para usar scopes customizados:
+
+1. **Registrar API no Azure AD**:
+   - Vá para **Expose an API**
+   - Configure **Application ID URI**: `api://seu-client-id`
+   - Adicione scopes: `appcheck`, `read`, `write`, etc.
+
+2. **Permissões da Aplicação**:
+   - Vá para **API permissions**
+   - Adicione permissões para Microsoft Graph: `User.Read`
+   - Adicione permissões para sua API customizada
+   - **Grant admin consent** se necessário
+
+### 📊 Visualização de Tokens
+
+A página `/tokens` exibe tokens separados por audiência:
+
+- 🆔 **ID Token Claims** (azul): Informações do usuário autenticado
+- 🔑 **Microsoft Graph Token** (verde): Para chamadas Graph API (`aud: 00000003-0000-0000-c000-000000000000`)
+- 🔐 **Custom API Token** (vermelho): Para sua API customizada (`aud: seu-client-id`)
+
+> **⚠️ Nota**: O ID Token só aparece quando `AZURE_CUSTOM_SCOPES` está configurado devido a limitações do MSAL com `acquire_token_silent`.
+
 ## 🌐 Endpoints Disponíveis
 
 - **`/`** - Página inicial
 - **`/login`** - Iniciar processo de autenticação
 - **`/auth/callback`** - Callback OAuth (configurado no Azure)
 - **`/profile`** - Perfil do usuário autenticado
-- **`/tokens`** - Visualizar tokens de acesso
+- **`/tokens`** - Visualizar tokens JWT detalhados (ID Token, Microsoft Graph Token, Custom API Tokens)
 - **`/logout`** - Encerrar sessão
 - **`/health`** - Health check da aplicação
 

@@ -43,8 +43,11 @@ def _build_auth_url(authority=None, scopes=None, state=None):
     if not msal_app:
         return None
     
+    # Default scopes: Microsoft Graph + Custom API scopes
+    default_scopes = ["User.Read"] + app_config.get_custom_scopes()
+    
     return msal_app.get_authorization_request_url(
-        scopes or ["User.Read"],
+        scopes or default_scopes,
         state=state or str(uuid.uuid4()),
         redirect_uri=app_config.get_redirect_uri(request)
     )
@@ -101,8 +104,10 @@ def login():
                              missing_vars=app_config.get_missing_vars(),
                              config_valid=False)
     
-    # Generate auth URL
-    auth_url = _build_auth_url(scopes=["User.Read"])
+    # Request both Graph and custom API scopes
+    # Azure AD will handle consent for both resources
+    custom_scopes = ["User.Read"] + app_config.get_custom_scopes()
+    auth_url = _build_auth_url(scopes=custom_scopes)
     if not auth_url:
         return render_template("error.html", 
                              error_message="Failed to generate authorization URL")
@@ -123,9 +128,10 @@ def auth_callback():
     
     if request.args.get('code'):
         # Use in-memory token cache (no session storage)
+        custom_scopes = ["User.Read"] + app_config.get_custom_scopes()
         result = msal_app.acquire_token_by_authorization_code(
             request.args['code'],
-            scopes=["User.Read"],
+            scopes=custom_scopes,
             redirect_uri=app_config.get_redirect_uri(request)
         )
         
@@ -221,50 +227,143 @@ def tokens():
     # Try to get fresh tokens for display
     accounts = msal_app.get_accounts()
     token_info = {
-        "id_token_claims": None,
-        "access_token_claims": None,
-        "access_token": None,
+        "graph_token_claims": None,
+        "custom_api_token_claims": None,
+        "graph_access_token": None,
+        "custom_api_access_token": None,
         "id_token": None,
+        "id_token_claims": None,
         "error": None
     }
     
     if accounts:
         try:
-            # Get fresh tokens silently
-            result = msal_app.acquire_token_silent(
+            # Get Microsoft Graph token
+            graph_result = msal_app.acquire_token_silent(
                 scopes=["User.Read"],
                 account=accounts[0]
             )
             
-            if result and "access_token" in result:
-                token_info["access_token"] = result.get("access_token")
-                token_info["id_token"] = result.get("id_token")
-                token_info["id_token_claims"] = result.get("id_token_claims", {})
+            # Get Custom API token (only if custom scopes are configured)
+            custom_api_scopes = app_config.get_custom_scopes()
+            custom_result = None
+            if custom_api_scopes:  # Only try if custom scopes are configured
+                custom_result = msal_app.acquire_token_silent(
+                    scopes=custom_api_scopes,
+                    account=accounts[0]
+                )
+            
+            # Process Graph token
+            if graph_result and "access_token" in graph_result:
+                token_info["graph_access_token"] = graph_result.get("access_token")
+                # ID token might be available in Graph result
+                if graph_result.get("id_token"):
+                    token_info["id_token"] = graph_result.get("id_token")
+                    token_info["id_token_claims"] = graph_result.get("id_token_claims", {})
                 
-                # Decode access token claims (basic parsing - for demo only)
+                # Decode Graph access token claims
                 try:
                     import base64
                     import json
-                    access_token = result.get("access_token")
+                    access_token = graph_result.get("access_token")
                     if access_token:
-                        # Split JWT and decode payload (without verification - demo only)
                         parts = access_token.split('.')
                         if len(parts) >= 2:
-                            # Add padding if needed
                             payload = parts[1]
                             payload += '=' * (4 - len(payload) % 4)
                             decoded = base64.b64decode(payload)
-                            token_info["access_token_claims"] = json.loads(decoded)
+                            token_info["graph_token_claims"] = json.loads(decoded)
                 except Exception as e:
-                    token_info["error"] = f"Failed to decode access token: {str(e)}"
-            else:
-                token_info["error"] = "Unable to acquire fresh tokens silently"
+                    print(f"Failed to decode Graph token: {e}")
+            
+            # If no ID token from Graph result, try from Custom API result
+            if not token_info.get("id_token") and custom_result and custom_result.get("id_token"):
+                token_info["id_token"] = custom_result.get("id_token")
+                token_info["id_token_claims"] = custom_result.get("id_token_claims", {})
+            
+            # If still no ID token claims but we have an ID token, try to decode it manually
+            if token_info.get("id_token") and not token_info.get("id_token_claims"):
+                try:
+                    import base64
+                    import json
+                    id_token = token_info["id_token"]
+                    parts = id_token.split('.')
+                    if len(parts) >= 2:
+                        payload = parts[1]
+                        payload += '=' * (4 - len(payload) % 4)
+                        decoded = base64.b64decode(payload)
+                        token_info["id_token_claims"] = json.loads(decoded)
+                        print(f"✓ Manually decoded ID token claims: {list(token_info['id_token_claims'].keys())}")
+                except Exception as e:
+                    print(f"Failed to manually decode ID token: {e}")
+            
+            # Debug: Print what we have
+            print(f"🔍 Token info debug:")
+            print(f"  - Graph token: {'✓' if token_info.get('graph_access_token') else '✗'}")
+            print(f"  - Custom token: {'✓' if token_info.get('custom_api_access_token') else '✗'}")
+            print(f"  - ID token: {'✓' if token_info.get('id_token') else '✗'}")
+            print(f"  - ID token claims: {'✓' if token_info.get('id_token_claims') else '✗'}")
+            if token_info.get('id_token_claims'):
+                print(f"    Claims keys: {list(token_info['id_token_claims'].keys())}")
+            
+            # Process Custom API token
+            if custom_result and "access_token" in custom_result:
+                token_info["custom_api_access_token"] = custom_result.get("access_token")
+                
+                # Decode Custom API access token claims
+                try:
+                    import base64
+                    import json
+                    access_token = custom_result.get("access_token")
+                    if access_token:
+                        parts = access_token.split('.')
+                        if len(parts) >= 2:
+                            payload = parts[1]
+                            payload += '=' * (4 - len(payload) % 4)
+                            decoded = base64.b64decode(payload)
+                            token_info["custom_api_token_claims"] = json.loads(decoded)
+                except Exception as e:
+                    print(f"Failed to decode Custom API token: {e}")
+            
+            # Handle errors gracefully based on configuration
+            errors = []
+            if not graph_result or "access_token" not in graph_result:
+                errors.append("Unable to acquire Graph token silently")
+            
+            # Only report custom API token errors if custom scopes are configured
+            if custom_api_scopes:  # Only check for custom API errors if scopes are configured
+                if not custom_result or "access_token" not in custom_result:
+                    errors.append("Unable to acquire Custom API token silently")
+            
+            # Set error message if any errors occurred
+            if errors:
+                token_info["error"] = " | ".join(errors)
+                    
         except Exception as e:
             token_info["error"] = f"Token acquisition error: {str(e)}"
     else:
         token_info["error"] = "No accounts found in MSAL cache"
     
-    return render_template("tokens.html", user=user, token_info=token_info)
+    # Extract dynamic info for explanation
+    explanation_info = {
+        "graph_audience": None,
+        "custom_audience": None,
+        "custom_scopes": [],
+        "client_id": app_config.get('AZURE_CLIENT_ID')
+    }
+    
+    # Extract audiences from actual tokens
+    if token_info.get("graph_token_claims"):
+        explanation_info["graph_audience"] = token_info["graph_token_claims"].get("aud")
+    
+    if token_info.get("custom_api_token_claims"):
+        explanation_info["custom_audience"] = token_info["custom_api_token_claims"].get("aud")
+        # Extract custom scopes
+        scp = token_info["custom_api_token_claims"].get("scp", "")
+        if scp:
+            explanation_info["custom_scopes"] = [s.strip() for s in scp.split() if s.strip()]
+    
+    return render_template("tokens.html", user=user, token_info=token_info, explanation_info=explanation_info)
 
 @app.route("/profile")
 def profile():
@@ -278,13 +377,12 @@ def profile():
     if not user:
         return redirect(url_for("login"))
     
-    # For profile page, try to get fresh token for MS Graph
-    # In production, you'd implement proper token refresh
+    # For profile page, try to get fresh Graph token for MS Graph
     accounts = msal_app.get_accounts()
     detailed_user = user  # Fallback to basic user info
     
     if accounts:
-        # Try to get fresh token silently
+        # Try to get fresh Graph token silently (separate from custom API)
         result = msal_app.acquire_token_silent(
             scopes=["User.Read"],
             account=accounts[0]
