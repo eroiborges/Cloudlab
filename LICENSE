@@ -1,0 +1,63 @@
+MIT License - Demo Purpose Only
+
+Copyright (c) 2026 - Cloud Lab Repository
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this repository content and associated materials (the "Materials"), to deal
+in the Materials without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Materials, and to permit persons to whom the Materials are
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+IMPORTANTE - DISCLAIMER DE RESPONSABILIDADE:
+
+1. AMBIENTE DE DEMONSTRAÇÃO: Este repositório e seus conteúdos são fornecidos exclusivamente para 
+   fins educacionais e de demonstração. NÃO são adequados para uso em produção
+   sem modificações substanciais de segurança e configuração.
+
+2. AUSÊNCIA DE SUPORTE: O autor e/ou sua empresa empregadora NÃO fornecem
+   suporte técnico, correções de bugs, atualizações ou qualquer forma de
+   assistência relacionada a este repositório e seus conteúdos.
+
+3. AUSÊNCIA DE GARANTIAS: Estes materiais são fornecidos "COMO ESTÃO", sem garantias
+   expressas ou implícitas, incluindo mas não limitado a garantias de 
+   comercialização, adequação a um propósito específico e não violação.
+
+4. LIMITAÇÃO DE RESPONSABILIDADE: Em nenhum caso o autor ou sua empresa
+   empregadora será responsável por quaisquer danos (incluindo, sem limitação,
+   danos por perda de lucros, interrupção de negócios, perda de informações
+   ou outras perdas pecuniárias) decorrentes do uso ou incapacidade de usar
+   estes materiais.
+
+5. USO POR CONTA E RISCO: Qualquer uso destes materiais é por conta e risco
+   exclusivos do usuário. É recomendado realizar testes completos e revisões
+   de segurança antes de qualquer implementação.
+
+6. SEPARAÇÃO DE RESPONSABILIDADES: Este projeto não representa opiniões,
+   práticas ou padrões da empresa empregadora do autor. É um trabalho
+   individual para fins de demonstração técnica.
+
+THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE MATERIALS OR THE USE OR OTHER DEALINGS IN THE
+MATERIALS.
+
+---
+
+AVISO ADICIONAL PARA EMPRESAS:
+
+Antes de usar qualquer conteúdo deste repositório em qualquer ambiente corporativo, certifique-se de:
+- Revisar e adaptar todas as configurações de segurança
+- Implementar práticas adequadas de autenticação e autorização  
+- Configurar monitoramento e alertas apropriados
+- Realizar testes de penetração e auditoria de segurança
+- Adaptar para suas políticas internas de compliance e governança
+
+Este repositório é fornecido como exemplo educacional e não deve ser considerado
+uma solução pronta para produção.

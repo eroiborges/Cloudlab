@@ -16,8 +16,31 @@ AZCli versions used:
 
 ## Cloud Network LABs
 
-1. [Azure networking routing using a HUB & Spoke + VPN.](./netlab/lab1.md).
+1. [Azure networking routing using a HUB & Spoke + VPN.](./netlab/lab1.md)
+
+## Training Day
+
+1. [AI Infrastructure Workshop](./TrainingDay/README.md) - Practical workshop for designing infrastructure to support AI projects
 
 ## Code Folder
 
-There are some script, container image or anything that can help in a LAB or Tshooting cenario.
+Sample applications and scripts for LAB and troubleshooting scenarios:
+
+1. [Application Insights Demo](./code/appinsights/README.md) - Full-stack application with monitoring and observability
+2. [Get Headers API](./code/getheaders/README.md) - Simple Python API for HTTP header inspection  
+3. [Entra ID App](./code/entraidapp/) - Azure AD/Entra ID integration examples
+4. [WebSocket Demo](./code/websocket/) - WebSocket implementation samples
+
+## Azure ARC
+
+1. [Azure ARC SQL Extensions](./AzureARC/) - Scripts and extensions for Azure ARC-enabled SQL Server
+
+## GitOps
+
+1. [Kustomization for Production](./gitops/README.md) - Kubernetes GitOps deployment configurations
+
+## License
+
+This repository is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Important**: This repository is provided for educational and demonstration purposes only. Please review the license file for important disclaimers regarding production use, support, and liability limitations.
