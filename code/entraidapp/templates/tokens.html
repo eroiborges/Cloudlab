@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}JWT Tokens - Microsoft Entra ID Demo{% endblock %}
+
+{% block header %}🔐 JWT Token Claims{% endblock %}
+
+{% block content %}
+<div style="text-align: center;">
+    {% if token_info.error %}
+        <div class="error">
+            <h3>Token Acquisition Error</h3>
+            <p>{{ token_info.error }}</p>
+            <p><em>Note: Tokens may have expired. Try logging in again.</em></p>
+        </div>
+    {% else %}
+        <div style="text-align: left; max-width: 900px; margin: 0 auto;">
+            
+            <!-- ID Token Claims -->
+            {% if token_info.id_token_claims %}
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px;">
+                    🆔 ID Token Claims
+                </h3>
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #0078d4;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        {% for key, value in token_info.id_token_claims.items() %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 8px; font-weight: bold; vertical-align: top; width: 200px;">{{ key }}</td>
+                            <td style="padding: 8px; word-break: break-all;">
+                                {% if value is string and value|length > 100 %}
+                                    <details>
+                                        <summary style="cursor: pointer; color: #0078d4;">{{ value[:50] }}... (click to expand)</summary>
+                                        <div style="margin-top: 10px; font-family: monospace; font-size: 12px; background-color: #f1f1f1; padding: 10px; border-radius: 3px;">{{ value }}</div>
+                                    </details>
+                                {% else %}
+                                    {{ value }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Access Token Claims -->
+            {% if token_info.access_token_claims %}
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 10px;">
+                    🔑 Access Token Claims
+                </h3>
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        {% for key, value in token_info.access_token_claims.items() %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 8px; font-weight: bold; vertical-align: top; width: 200px;">{{ key }}</td>
+                            <td style="padding: 8px; word-break: break-all;">
+                                {% if value is string and value|length > 100 %}
+                                    <details>
+                                        <summary style="cursor: pointer; color: #28a745;">{{ value[:50] }}... (click to expand)</summary>
+                                        <div style="margin-top: 10px; font-family: monospace; font-size: 12px; background-color: #f1f1f1; padding: 10px; border-radius: 3px;">{{ value }}</div>
+                                    </details>
+                                {% else %}
+                                    {% if value is iterable and value is not string %}
+                                        {{ value|join(', ') }}
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Raw Tokens (Expandable) -->
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #6c757d; border-bottom: 2px solid #6c757d; padding-bottom: 10px;">
+                    📄 Raw JWT Tokens
+                </h3>
+                
+                {% if token_info.id_token %}
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #0078d4;">ID Token (JWT)</h4>
+                    <details style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+                        <summary style="cursor: pointer; color: #0078d4; font-weight: bold;">Click to view raw ID token</summary>
+                        <div style="margin-top: 15px; font-family: monospace; font-size: 11px; background-color: #f1f1f1; padding: 15px; border-radius: 3px; word-break: break-all; line-height: 1.4;">{{ token_info.id_token }}</div>
+                    </details>
+                </div>
+                {% endif %}
+
+                {% if token_info.access_token %}
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #28a745;">Access Token (JWT)</h4>
+                    <details style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+                        <summary style="cursor: pointer; color: #28a745; font-weight: bold;">Click to view raw Access token</summary>
+                        <div style="margin-top: 15px; font-family: monospace; font-size: 11px; background-color: #f1f1f1; padding: 15px; border-radius: 3px; word-break: break-all; line-height: 1.4;">{{ token_info.access_token }}</div>
+                    </details>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Important Claims Explanation -->
+            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+                <h4 style="color: #856404; margin-top: 0;">🔍 Key Claims Explained</h4>
+                <ul style="color: #856404; margin: 10px 0;">
+                    <li><strong>aud:</strong> Audience - The application ID that the token was issued for</li>
+                    <li><strong>iss:</strong> Issuer - The Microsoft Entra ID tenant that issued the token</li>
+                    <li><strong>sub:</strong> Subject - Unique identifier for the user</li>
+                    <li><strong>preferred_username:</strong> User's preferred username (UPN)</li>
+                    <li><strong>name:</strong> Display name of the user</li>
+                    <li><strong>scp:</strong> Scopes - Permissions granted to the application</li>
+                    <li><strong>iat/exp:</strong> Issued at / Expires at timestamps</li>
+                </ul>
+            </div>
+
+        </div>
+    {% endif %}
+    
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('index') }}" class="button">🏠 Home</a>
+        <a href="{{ url_for('profile') }}" class="button">👤 Profile</a>
+        <a href="{{ url_for('logout') }}" class="button secondary">🔐 Logout</a>
+    </div>
+</div>
+{% endblock %}

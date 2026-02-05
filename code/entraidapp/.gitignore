@@ -1,0 +1,16 @@
+env-variables.txt
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+instance/
+.webassets-cache
+.env
+.venv/
+venv/
+ENV/

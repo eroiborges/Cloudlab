@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - Microsoft Entra ID Demo{% endblock %}
+
+{% block header %}User Profile{% endblock %}
+
+{% block content %}
+<div style="text-align: center;">
+    <div class="user-info">
+        <h3>👤 User Profile Information</h3>
+        <div style="text-align: left; max-width: 500px; margin: 0 auto;">
+            <p><strong>Display Name:</strong></p>
+            <p style="margin-left: 20px;">{{ user.displayName or 'Not available' }}</p>
+            
+            <p><strong>User Principal Name:</strong></p>
+            <p style="margin-left: 20px;">{{ user.userPrincipalName or 'Not available' }}</p>
+            
+            <p><strong>Email Address:</strong></p>
+            <p style="margin-left: 20px;">{{ user.mail or 'Not available' }}</p>
+            
+            {% if user.jobTitle %}
+            <p><strong>Job Title:</strong></p>
+            <p style="margin-left: 20px;">{{ user.jobTitle }}</p>
+            {% endif %}
+            
+            {% if user.department %}
+            <p><strong>Department:</strong></p>
+            <p style="margin-left: 20px;">{{ user.department }}</p>
+            {% endif %}
+            
+            {% if user.officeLocation %}
+            <p><strong>Office Location:</strong></p>
+            <p style="margin-left: 20px;">{{ user.officeLocation }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('index') }}" class="button">🏠 Home</a>
+        <a href="{{ url_for('logout') }}" class="button secondary">🔐 Logout</a>
+    </div>
+</div>
+{% endblock %}

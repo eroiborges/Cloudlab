@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: entraiddemo-config
+  namespace: default
+  labels:
+    app: entraiddemo
+data:
+  # Azure Entra ID Configuration
+  AZURE_TENANT_ID: "your-tenant-id-here"
+  AZURE_CLIENT_ID: "your-client-id-here"
+  AZURE_CLIENT_SECRET: "your-client-secret-here"
+  AZURE_AUTHORITY: "https://login.microsoftonline.com/your-tenant-id-here"
+  
+  # Application Configuration
+  APP_ENVIRONMENT: "dev"
+  CUSTOM_FQDN: "your-domain.com"
+  FLASK_PORT: "5000"
+  FLASK_HOST: "0.0.0.0"
+  FLASK_SECRET_KEY: "your-flask-secret-key-32chars-long"
+  SESSION_TIMEOUT_MINUTES: "5"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: entraiddemo-secrets
+  namespace: default
+  labels:
+    app: entraiddemo
+type: Opaque
+stringData:
+  # Sensitive data (base64 encoded when applied)
+  AZURE_CLIENT_SECRET: "your-client-secret-here"
+  FLASK_SECRET_KEY: "your-flask-secret-key-32chars-long"

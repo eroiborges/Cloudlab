@@ -1,0 +1,44 @@
+# Docker ignore file for clean builds
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+instance/
+.webassets-cache
+
+# Environment and secrets
+.env
+env-variables.txt
+*.log
+
+# Version control
+.git/
+.gitignore
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+*.md
+
+# Kubernetes files (not needed in container)
+k8s/
+*.yaml
+*.yml

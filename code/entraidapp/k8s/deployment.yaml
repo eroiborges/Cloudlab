@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: entraiddemo-deployment
+  namespace: default
+  labels:
+    app: entraiddemo
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: entraiddemo
+  template:
+    metadata:
+      labels:
+        app: entraiddemo
+        version: v1
+    spec:
+      containers:
+      - name: entraiddemo
+        image: entraiddemo:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        env:
+        # Non-sensitive configuration from ConfigMap
+        - name: AZURE_TENANT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: AZURE_TENANT_ID
+        - name: AZURE_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: AZURE_CLIENT_ID
+        - name: AZURE_AUTHORITY
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: AZURE_AUTHORITY
+        - name: APP_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: APP_ENVIRONMENT
+        - name: CUSTOM_FQDN
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: CUSTOM_FQDN
+        - name: FLASK_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: FLASK_PORT
+        - name: FLASK_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: FLASK_HOST
+        - name: SESSION_TIMEOUT_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: entraiddemo-config
+              key: SESSION_TIMEOUT_MINUTES
+        # Sensitive configuration from Secret
+        - name: AZURE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: entraiddemo-secrets
+              key: AZURE_CLIENT_SECRET
+        - name: FLASK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: entraiddemo-secrets
+              key: FLASK_SECRET_KEY
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1001
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: entraiddemo-service
+  namespace: default
+  labels:
+    app: entraiddemo
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+    app: entraiddemo
+
+---
+# Optional: Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: entraiddemo-ingress
+  namespace: default
+  labels:
+    app: entraiddemo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - your-domain.com
+    secretName: entraiddemo-tls
+  rules:
+  - host: your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: entraiddemo-service
+            port:
+              number: 80

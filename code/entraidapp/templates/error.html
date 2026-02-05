@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Error - Microsoft Entra ID Demo{% endblock %}
+
+{% block header %}⚠️ Configuration Error{% endblock %}
+
+{% block content %}
+<div class="error">
+    {% if missing_vars %}
+        <h3>Missing Environment Variables</h3>
+        <p>The following environment variables are required but not set:</p>
+        <ul>
+            {% for var in missing_vars %}
+                <li><strong>{{ var.name }}</strong>: {{ var.description }}</li>
+            {% endfor %}
+        </ul>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+            <h4>How to fix:</h4>
+            <ol>
+                <li>Set the missing environment variables in your shell</li>
+                <li>Restart the application</li>
+            </ol>
+            <p><strong>Example:</strong></p>
+            <code style="background-color: #f8f9fa; padding: 5px; border-radius: 3px;">
+                export AZURE_TENANT_ID=your-tenant-id
+            </code>
+        </div>
+    {% else %}
+        <h3>Application Error</h3>
+        <p>{{ error_message or 'An unexpected error occurred.' }}</p>
+    {% endif %}
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <a href="{{ url_for('health_check') }}" class="button">🏥 Health Check</a>
+</div>
+{% endblock %}
