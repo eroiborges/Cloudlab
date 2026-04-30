@@ -58,12 +58,20 @@ update_sql_licenses() {
         echo "  Resource Group: $resource_group"
         echo "  Machine Name: $machine_name"
         
+        # Build settings JSON; PAYG requires ConsentToRecurringPAYG in CSP subscriptions
+        if [ "$license_type" = "PAYG" ]; then
+            consent_timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+            settings_json="{\"LicenseType\":\"$license_type\",\"ConsentToRecurringPAYG\":{\"Consented\":true,\"ConsentTimestamp\":\"$consent_timestamp\"}}"
+        else
+            settings_json="{\"LicenseType\":\"$license_type\"}"
+        fi
+
         # Update the SQL Server extension license type
         az connectedmachine extension update \
             --resource-group "$resource_group" \
             --machine-name "$machine_name" \
             --name "$extension_name" \
-            --settings "{\"LicenseType\":\"$license_type\"}" \
+            --settings "$settings_json" \
             --no-wait
         
         if [ $? -eq 0 ]; then
@@ -123,12 +131,20 @@ update_single_sql_license() {
     echo "Found extension: $extension_name"
     echo ""
     
+    # Build settings JSON; PAYG requires ConsentToRecurringPAYG in CSP subscriptions
+    if [ "$license_type" = "PAYG" ]; then
+        consent_timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+        settings_json="{\"LicenseType\":\"$license_type\",\"ConsentToRecurringPAYG\":{\"Consented\":true,\"ConsentTimestamp\":\"$consent_timestamp\"}}"
+    else
+        settings_json="{\"LicenseType\":\"$license_type\"}"
+    fi
+
     # Update the SQL Server extension license type
     az connectedmachine extension update \
         --resource-group "$resource_group" \
         --machine-name "$machine_name" \
         --name "$extension_name" \
-        --settings "{\"LicenseType\":\"$license_type\"}" \
+        --settings "$settings_json" \
         --no-wait
     
     if [ $? -eq 0 ]; then
