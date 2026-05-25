@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "value": "law-sqlmonitor-prod"
+    },
+    "workspaceRetentionDays": {
+      "value": 30
+    },
+    "actionGroupName": {
+      "value": "ag-cert-monitor"
+    },
+    "actionGroupShortName": {
+      "value": "CertAlert"
+    },
+    "alertEmailAddress": {
+      "value": "ops-team@contoso.com"
+    },
+    "logFilePath": {
+      "value": "C:\\WindowsAzure\\Certs\\logs\\CertHealth.log"
+    },
+    "environment": {
+      "value": "production"
+    },
+    "ownerTag": {
+      "value": "IT-Operations"
+    }
+  }
+}

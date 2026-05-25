@@ -1,0 +1,237 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+
+    {
+      "type": 1,
+      "content": {
+        "json": "# Certificate Health Dashboard\n\nMonitors certificate expiry and chain validity across Windows servers managed via Azure Arc.\n\n**Sources:** CertStore (My, WebHosting, CA) · IIS HTTPS bindings · RDP · WinRM · SQL Server\n\n> **Server name** is derived from the Azure Arc machine resource ID (`/machines/<hostname>`)."
+      },
+      "name": "header"
+    },
+
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "a1b2c3d4-0001-0001-0001-a1b2c3d40001",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time Range",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 43200000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 259200000 },
+                { "durationMs": 604800000 }
+              ],
+              "allowCustom": true
+            },
+            "value": { "durationMs": 86400000 }
+          },
+          {
+            "id": "a1b2c3d4-0002-0002-0002-a1b2c3d40002",
+            "version": "KqlParameterItem/1.0",
+            "name": "ServerName",
+            "label": "Server",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "",
+            "delimiter": "|",
+            "query": "CertHealth_CL\n| where TimeGenerated > ago(7d)\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| where isnotempty(ServerName)\n| summarize by ServerName\n| sort by ServerName asc",
+            "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "typeSettings": {
+              "additionalQueries": {}
+            }
+          },
+          {
+            "id": "a1b2c3d4-0003-0003-0003-a1b2c3d40003",
+            "version": "KqlParameterItem/1.0",
+            "name": "SourceCategory",
+            "label": "Source Type",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "",
+            "delimiter": "|",
+            "query": "CertHealth_CL\n| where TimeGenerated > ago(7d) and isnotempty(Source) and isnotempty(Thumbprint)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source,\n    ''\n  )\n| where isnotempty(SourceCategory)\n| summarize by SourceCategory\n| sort by SourceCategory asc",
+            "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "typeSettings": {
+              "additionalQueries": {}
+            }
+          },
+          {
+            "id": "a1b2c3d4-0004-0004-0004-a1b2c3d40004",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "label": "Severity",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "",
+            "delimiter": "|",
+            "query": "CertHealth_CL\n| where TimeGenerated > ago(7d) and isnotempty(Severity) and isnotempty(Thumbprint)\n| summarize by Severity\n| sort by Severity asc",
+            "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "typeSettings": {
+              "additionalQueries": {}
+            }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+
+    {
+      "type": 1,
+      "content": {
+        "json": "## Status Summary"
+      },
+      "name": "labelSummary"
+    },
+
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Severity}') or Severity in~ (split('{Severity}', '|'))\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName, MetricName\n| summarize\n    Expired     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) < 0),\n    Critical    = countif(MetricName == 'CertDaysToExpiry' and toint(Value) >= 0 and toint(Value) <= 30),\n    Warning     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) > 30 and toint(Value) <= 60),\n    Healthy     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) > 60),\n    ChainBroken = countif(MetricName == 'CertChainValid' and toint(Value) == 0),\n    ChainValid  = countif(MetricName == 'CertChainValid' and toint(Value) == 1)\n| extend Categories = pack_array('Expired', 'Critical (<=30d)', 'Warning (<=60d)', 'Healthy (>60d)', 'Chain Broken', 'Chain Valid'),\n         Counts = pack_array(Expired, Critical, Warning, Healthy, ChainBroken, ChainValid)\n| mv-expand Category = Categories to typeof(string), Count = Counts to typeof(long)\n| project Category, Count",
+        "size": 4,
+        "showBusyWhenRefreshing": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+        "visualization": "tiles",
+        "timeContextFromParameter": "TimeRange",
+        "tileSettings": {
+          "showBorder": false,
+          "titleContent": {
+            "columnMatch": "Category",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Count",
+            "formatter": 12,
+            "formatOptions": { "palette": "auto" },
+            "numberFormat": {
+              "unit": 17,
+              "options": { "style": "decimal", "maximumFractionDigits": 0 }
+            }
+          }
+        }
+      },
+      "name": "tilesExpiry"
+    },
+
+    {
+      "type": 1,
+      "content": {
+        "json": "## Certificate Inventory\n\nLatest expiry state per certificate per server. Sorted by days remaining (ascending — most urgent first)."
+      },
+      "name": "labelInventory"
+    },
+
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and MetricName == 'CertDaysToExpiry' and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Severity}') or Severity in~ (split('{Severity}', '|'))\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName\n| project\n    ServerName,\n    Source,\n    Subject,\n    Thumbprint,\n    Status,\n    Severity,\n    DaysToExpiry = toint(Value),\n    Message,\n    LastSeen = TimeGenerated\n| sort by DaysToExpiry asc",
+        "size": 0,
+        "showBusyWhenRefreshing": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+        "visualization": "table",
+        "timeContextFromParameter": "TimeRange",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Severity",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  { "operator": "==", "thresholdValue": "Critical", "representation": "4", "text": "{0}{1}" },
+                  { "operator": "==", "thresholdValue": "Error",    "representation": "4", "text": "{0}{1}" },
+                  { "operator": "==", "thresholdValue": "Warning",  "representation": "2", "text": "{0}{1}" },
+                  { "operator": "==", "thresholdValue": "OK",       "representation": "1", "text": "{0}{1}" },
+                  { "operator": "Default",                           "representation": "unknown", "text": "{0}{1}" }
+                ]
+              }
+            },
+            {
+              "columnMatch": "DaysToExpiry",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "colors",
+                "thresholdsGrid": [
+                  { "operator": "<",  "thresholdValue": "0",  "representation": "redBright",  "text": "{0}" },
+                  { "operator": "<=", "thresholdValue": "30", "representation": "orange",      "text": "{0}" },
+                  { "operator": "<=", "thresholdValue": "60", "representation": "yellow",      "text": "{0}" },
+                  { "operator": "Default",                    "representation": "green",        "text": "{0}" }
+                ]
+              }
+            }
+          ],
+          "sortBy": [ { "itemKey": "DaysToExpiry", "sortOrder": 1 } ]
+        }
+      },
+      "name": "gridInventory"
+    },
+
+    {
+      "type": 1,
+      "content": {
+        "json": "## Active Issues\n\nCertificates with `Critical` or `Error` severity, plus any broken chain validations."
+      },
+      "name": "labelIssues"
+    },
+
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where Severity in ('Critical', 'Error') or (MetricName == 'CertChainValid' and toint(Value) == 0)\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName, MetricName\n| project\n    ServerName,\n    Source,\n    MetricName,\n    Subject,\n    Thumbprint,\n    Status,\n    Severity,\n    Value,\n    Message,\n    LastSeen = TimeGenerated\n| sort by Severity asc, LastSeen desc",
+        "size": 0,
+        "showBusyWhenRefreshing": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+        "visualization": "table",
+        "timeContextFromParameter": "TimeRange",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Severity",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  { "operator": "==", "thresholdValue": "Critical", "representation": "4", "text": "{0}{1}" },
+                  { "operator": "==", "thresholdValue": "Error",    "representation": "4", "text": "{0}{1}" },
+                  { "operator": "==", "thresholdValue": "Warning",  "representation": "2", "text": "{0}{1}" },
+                  { "operator": "Default",                           "representation": "unknown", "text": "{0}{1}" }
+                ]
+              }
+            }
+          ],
+          "sortBy": [ { "itemKey": "Severity", "sortOrder": 1 } ]
+        }
+      },
+      "name": "gridIssues"
+    }
+
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
