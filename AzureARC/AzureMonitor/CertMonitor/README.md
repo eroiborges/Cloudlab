@@ -272,6 +272,7 @@ Get-Service -Name AzureMonitorAgent
 3. Registers the Windows Application Event Log source (`ADMonitoringScript`)
 4. Creates the Scheduled Task (`CertMonitor-CertCollect`) running as `SYSTEM`
 5. **Fires the first execution immediately** so data appears without waiting for the repeat interval
+6. By default, copies `Invoke-CertMonitorLogRotation.ps1` and registers `CertMonitor-LogRotation` (daily at 02:00)
 
 Run on each VM with local Administrator rights:
 
@@ -291,6 +292,10 @@ Run on each VM with local Administrator rights:
 | `-TaskName` | `CertMonitor-CertCollect` | Task Scheduler job name |
 | `-IntervalMinutes` | `1440` | Run frequency (1440 = once per day) |
 | `-RunAsUser` | _(none — runs as SYSTEM)_ | Identity for the scheduled task (domain account, gMSA, or local account). See [Service Account – Least-Privilege Setup](#service-account--least-privilege-setup) for the required permissions and account creation steps before using this parameter. |
+| `-RunAsPassword` | _(prompted if needed)_ | Optional SecureString password for `-RunAsUser` when using a non-gMSA account. If omitted, the script prompts once and reuses the same credential for both tasks. |
+| `-LogRotation` | `$true` | Enables automatic copy of `Invoke-CertMonitorLogRotation.ps1` and registration of the daily log rotation task. |
+| `-LogRotationSourcePath` | `./Invoke-CertMonitorLogRotation.ps1` | Optional source path for the log rotation script (defaults to sibling file next to installer). |
+| `-LogRotationTaskName` | `CertMonitor-LogRotation` | Task name used for the log rotation schedule. |
 | `-Force` | `$false` | Overwrite existing task |
 
 > **Security note:** By default the task runs as `SYSTEM`, which satisfies all permission requirements but grants unrestricted OS access. For environments governed by CIS, STIG, or internal hardening baselines, use `-RunAsUser` with a dedicated low-privilege account. **Read the [Service Account – Least-Privilege Setup](#service-account--least-privilege-setup) section in full before choosing an identity** — it covers gMSA, local, and domain account options with the exact ACLs and local rights each one requires.
@@ -310,12 +315,38 @@ Run on each VM with local Administrator rights:
 # Re-register an existing task (force overwrite)
 .\Install-CertMonitor.ps1 -Force
 
+# Disable automatic log rotation setup
+.\Install-CertMonitor.ps1 -LogRotation $false
+
+# Provide explicit log rotation source path
+.\Install-CertMonitor.ps1 -LogRotationSourcePath 'C:\temp\Invoke-CertMonitorLogRotation.ps1'
+
+# Use a custom log rotation task name
+.\Install-CertMonitor.ps1 -LogRotationTaskName 'CertMonitor-LogRotation-Prod'
+
 # Run as a domain service account (password will be prompted securely)
 .\Install-CertMonitor.ps1 -RunAsUser 'DOMAIN\svc-certmonitor'
+
+# Run as a domain service account with an explicit SecureString password
+$pwd = Read-Host -AsSecureString 'svc-certmonitor password'
+.\Install-CertMonitor.ps1 -RunAsUser 'DOMAIN\svc-certmonitor' -RunAsPassword $pwd
 
 # Run as a Group Managed Service Account (no password required — $ suffix detected automatically)
 .\Install-CertMonitor.ps1 -RunAsUser 'DOMAIN\svc-certmonitor$'
 ```
+
+### PowerShell portability skill
+
+To keep scripts compatible across Windows PowerShell 5.1, PowerShell 7+, and remote copy/edit workflows, use the portability checklist in:
+
+- `./skills/powershell-portability/SKILL.md`
+
+This checklist includes:
+
+- ASCII-only script content (no smart punctuation)
+- strict parser validation before deployment
+- simple quoting patterns for string interpolation
+- minimal dependency usage and compatibility-safe cmdlets
 
 ### Verify log file
 
@@ -339,7 +370,13 @@ Get-EventLog -LogName Application -Source ADMonitoringScript -Newest 20 |
 
 ### Log rotation
 
-Register the log rotation task (run daily at 02:00 AM). Run once per VM with local Administrator rights:
+Register the log rotation task (run daily at 02:00 AM). Run once per VM with local Administrator rights.
+
+> `Install-CertMonitor.ps1` already configures log rotation by default (`-LogRotation $true`). Use the manual registration examples below only when you choose to manage the log-rotation task yourself.
+
+> **Least-privilege:** Use the **same `svc-certmonitor` service account** as the collector task. `Invoke-CertMonitorLogRotation.ps1` only reads, renames, and deletes files under `C:\WindowsAzure\Certs\logs\` — fully covered by the **Modify** ACL already granted. No additional permissions are required. Use `RunLevel Limited` (not `Highest`) for a standard user account.
+
+**Option A — gMSA (domain-joined):**
 
 ```powershell
 $ScriptDir   = "C:\WindowsAzure\Certs\scripts"
@@ -347,10 +384,27 @@ $action      = New-ScheduledTaskAction -Execute "powershell.exe" `
     -Argument "-NonInteractive -NoProfile -ExecutionPolicy Bypass -File `"$ScriptDir\Invoke-CertMonitorLogRotation.ps1`""
 $trigger     = New-ScheduledTaskTrigger -Daily -At "02:00"
 $settings    = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -StartWhenAvailable
-$principal   = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$principal   = New-ScheduledTaskPrincipal -UserId "DOMAIN\svc-certmonitor$" -LogonType Password -RunLevel Limited
 
 Register-ScheduledTask -TaskName "CertMonitor-LogRotation" `
     -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Force
+Write-Host "Registered: CertMonitor-LogRotation"
+```
+
+**Option B — local account (standalone / workgroup):**
+
+```powershell
+$ScriptDir   = "C:\WindowsAzure\Certs\scripts"
+$action      = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NonInteractive -NoProfile -ExecutionPolicy Bypass -File `"$ScriptDir\Invoke-CertMonitorLogRotation.ps1`""
+$trigger     = New-ScheduledTaskTrigger -Daily -At "02:00"
+$settings    = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -StartWhenAvailable
+$principal   = New-ScheduledTaskPrincipal -UserId ".\svc-certmonitor" -LogonType Password -RunLevel Limited
+$password    = Read-Host "svc-certmonitor password"   # plain string required by Register-ScheduledTask
+
+Register-ScheduledTask -TaskName "CertMonitor-LogRotation" `
+    -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
+    -Password $password -Force
 Write-Host "Registered: CertMonitor-LogRotation"
 ```
 
