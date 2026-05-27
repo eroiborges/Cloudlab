@@ -44,7 +44,7 @@ As credenciais utilizadas para acesso RDP/SSH a uma maquina virtual ou acesso ao
 
 | Tipo | Login | Password | Comentário |
 | -------- | -------- | ------ | ------ |
-| Windows |  **Localadmin** | b2xhbXVuZG8xMjM=| Login RDP da VM |
+| Windows |  **localadmin** | b2xhbXVuZG8xMjM=| Login RDP da VM |
 | Linux   | **pgadmin** | b2xhbXVuZG8xMjM=| Login SSH da VM |
 | PGSQL User | **demouser** | demopass123| Login na instancia local do PGSQL da VM Linux |
 | AzSQLDB |  **dbadmin** | b2xhbXVuZG8xMjM=| login da instancia PaaS Azure SQL |

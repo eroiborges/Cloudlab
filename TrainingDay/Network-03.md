@@ -21,7 +21,7 @@
     ```
     az container show --resource-group $rgnameaz --name $instancename -o table --query "{URL:ipAddress.fqdn, Porta:ipAddress.ports[0].port}"
     ```
-    > **Para testar o ACI utilizar:** curl -s URL:PORT/headers | jq
+    > **Para testar o ACI utilizar:** curl -s http://URL:PORT/headers | jq
 
 ## Application Gateway
 

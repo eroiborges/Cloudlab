@@ -1,0 +1,9 @@
+# Namespace para a aplicação Northwind
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: northwind-demo
+  labels:
+    app: northwind-ecommerce
+    environment: demo
+    monitoring: application-insights

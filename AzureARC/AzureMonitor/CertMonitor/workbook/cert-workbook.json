@@ -88,6 +88,24 @@
             "typeSettings": {
               "additionalQueries": {}
             }
+          },
+          {
+            "id": "a1b2c3d4-0005-0005-0005-a1b2c3d40005",
+            "version": "KqlParameterItem/1.0",
+            "name": "Thumbprint",
+            "label": "Thumbprint",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "",
+            "delimiter": "|",
+            "query": "CertHealth_CL\n| where TimeGenerated > ago(7d) and isnotempty(Thumbprint)\n| summarize by Thumbprint\n| sort by Thumbprint asc",
+            "crossComponentResources": [ "__WORKSPACE_RESOURCE_ID__" ],
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "typeSettings": {
+              "additionalQueries": {}
+            }
           }
         ]
       },
@@ -106,7 +124,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Severity}') or Severity in~ (split('{Severity}', '|'))\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName, MetricName\n| summarize\n    Expired     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) < 0),\n    Critical    = countif(MetricName == 'CertDaysToExpiry' and toint(Value) >= 0 and toint(Value) <= 30),\n    Warning     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) > 30 and toint(Value) <= 60),\n    Healthy     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) > 60),\n    ChainBroken = countif(MetricName == 'CertChainValid' and toint(Value) == 0),\n    ChainValid  = countif(MetricName == 'CertChainValid' and toint(Value) == 1)\n| extend Categories = pack_array('Expired', 'Critical (<=30d)', 'Warning (<=60d)', 'Healthy (>60d)', 'Chain Broken', 'Chain Valid'),\n         Counts = pack_array(Expired, Critical, Warning, Healthy, ChainBroken, ChainValid)\n| mv-expand Category = Categories to typeof(string), Count = Counts to typeof(long)\n| project Category, Count",
+        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Severity}') or Severity in~ (split('{Severity}', '|'))\n| where isempty('{Thumbprint}') or Thumbprint in~ (split('{Thumbprint}', '|'))\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName, MetricName\n| summarize\n    Expired     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) < 0),\n    Critical    = countif(MetricName == 'CertDaysToExpiry' and toint(Value) >= 0 and toint(Value) <= 30),\n    Warning     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) > 30 and toint(Value) <= 60),\n    Healthy     = countif(MetricName == 'CertDaysToExpiry' and toint(Value) > 60),\n    ChainBroken = countif(MetricName == 'CertChainValid' and toint(Value) == 0),\n    ChainValid  = countif(MetricName == 'CertChainValid' and toint(Value) == 1)\n| extend Categories = pack_array('Expired', 'Critical (<=30d)', 'Warning (<=60d)', 'Healthy (>60d)', 'Chain Broken', 'Chain Valid'),\n         Counts = pack_array(Expired, Critical, Warning, Healthy, ChainBroken, ChainValid)\n| mv-expand Category = Categories to typeof(string), Count = Counts to typeof(long)\n| project Category, Count",
         "size": 4,
         "showBusyWhenRefreshing": true,
         "queryType": 0,
@@ -146,7 +164,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and MetricName == 'CertDaysToExpiry' and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Severity}') or Severity in~ (split('{Severity}', '|'))\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName\n| project\n    ServerName,\n    Source,\n    Subject,\n    Thumbprint,\n    Status,\n    Severity,\n    DaysToExpiry = toint(Value),\n    Message,\n    LastSeen = TimeGenerated\n| sort by DaysToExpiry asc",
+        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and MetricName == 'CertDaysToExpiry' and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Severity}') or Severity in~ (split('{Severity}', '|'))\n| where isempty('{Thumbprint}') or Thumbprint in~ (split('{Thumbprint}', '|'))\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName\n| project\n    ServerName,\n    Source,\n    Subject,\n    Thumbprint,\n    Status,\n    Severity,\n    DaysToExpiry = toint(Value),\n    Message,\n    LastSeen = TimeGenerated\n| sort by DaysToExpiry asc",
         "size": 0,
         "showBusyWhenRefreshing": true,
         "queryType": 0,
@@ -202,7 +220,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where Severity in ('Critical', 'Error') or (MetricName == 'CertChainValid' and toint(Value) == 0)\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName, MetricName\n| project\n    ServerName,\n    Source,\n    MetricName,\n    Subject,\n    Thumbprint,\n    Status,\n    Severity,\n    Value,\n    Message,\n    LastSeen = TimeGenerated\n| sort by Severity asc, LastSeen desc",
+        "query": "CertHealth_CL\n| extend ServerName = extract(@'(?i)/machines/([^/]+)$', 1, _ResourceId)\n| extend SourceCategory = case(\n    Source startswith 'CertStore:', 'CertStore',\n    Source startswith 'IIS:', 'IIS',\n    Source startswith 'SQLServer:', 'SQLServer',\n    isnotempty(Source), Source, ''\n  )\n| where isnotempty(Thumbprint) and isnotempty(Source)\n| where isempty('{ServerName}') or ServerName in~ (split('{ServerName}', '|'))\n| where isempty('{SourceCategory}') or SourceCategory in~ (split('{SourceCategory}', '|'))\n| where isempty('{Thumbprint}') or Thumbprint in~ (split('{Thumbprint}', '|'))\n| where Severity in ('Critical', 'Error') or (MetricName == 'CertChainValid' and toint(Value) == 0)\n| summarize arg_max(TimeGenerated, *) by Thumbprint, ServerName, MetricName\n| project\n    ServerName,\n    Source,\n    MetricName,\n    Subject,\n    Thumbprint,\n    Status,\n    Severity,\n    Value,\n    Message,\n    LastSeen = TimeGenerated\n| sort by Severity asc, LastSeen desc",
         "size": 0,
         "showBusyWhenRefreshing": true,
         "queryType": 0,

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Northwind E-commerce - Demo Azure Application Insights" />
+  <title>Northwind E-commerce</title>
+  <script>
+    // Runtime configuration - estas variáveis podem ser substituídas pelo nginx
+    window.API_BASE_URL = '${API_BASE_URL}';
+    window.APPINSIGHTS_CONNECTION_STRING = '${APPINSIGHTS_CONNECTION_STRING}';
+  </script>
+</head>
+<body>
+  <noscript>Você precisa habilitar o JavaScript para executar esta aplicação.</noscript>
+  <div id="root"></div>
+</body>
+</html>

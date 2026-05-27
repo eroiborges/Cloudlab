@@ -1,0 +1,82 @@
+# NetworkPolicy para segurança de rede
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: northwind-network-policy
+  namespace: northwind-demo
+  labels:
+    app: northwind-ecommerce
+spec:
+  podSelector:
+    matchLabels:
+      app: northwind-backend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Permite tráfego do frontend para o backend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: northwind-frontend
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Permite tráfego do load generator para o backend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: northwind-loadgen
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Permite tráfego externo através do Ingress
+  - from: []
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Permite acesso ao PostgreSQL externo
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Permite acesso ao Application Insights
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # Permite DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# PodDisruptionBudget para alta disponibilidade
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: northwind-backend-pdb
+  namespace: northwind-demo
+  labels:
+    app: northwind-backend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: northwind-backend
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: northwind-frontend-pdb
+  namespace: northwind-demo
+  labels:
+    app: northwind-frontend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: northwind-frontend

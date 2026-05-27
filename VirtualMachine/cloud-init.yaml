@@ -1,0 +1,17 @@
+#cloud-config
+users:
+  - name: sadmin
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxwF6b5iC009pSTLHYiN7J1UIoft66izcWQfAX/obwYw6JxWp/dxVAfaBAAdKiKxC1CTX3+5id+ofls3FfJgxRlBGF+F+ffupW+NVLT6fsmRudA6JP4oG1kHO0jraUFlPc0LcA4Gjpbg7T/XkJAZuWR7+V24iVsMyFK4xLDV8RDsrVmmD3PGA3QWL31+jpd1xdCwrW3BRlO6xVh+Aay8BUAbUXWFaisoplrynURoEbsm6y2oPXBvId9iWZAHwkcj6uFodReqOf4d5AzmBVy8Opsez6EFUwZEq4k1FINmTDEYuP9Kvf4lARib0ClL7Cjydv1mlj809AxQ/lG+ieKyh7
+
+ssh_pwauth: false
+disable_root: true
+
+package_update: true
+package_upgrade: true
+
+runcmd:
+  - echo "Cloud-init executed successfully"

@@ -1,0 +1,166 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f7fa;  /* Fundo mais claro */
+  color: #2c3e50;  /* Texto mais escuro para contraste */
+}
+
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Jumbotron personalizado - gradiente mais suave */
+.jumbotron {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);  /* Azul mais suave */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: white;  /* Força texto branco no jumbotron */
+}
+
+/* Cards de produtos - fundo mais claro */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  background-color: white;
+  border: 1px solid #e1e8ed;
+  color: #2c3e50;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Botões customizados */
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Badges customizados */
+.badge {
+  font-weight: 500;
+}
+
+/* Navbar customizada */
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.navbar {
+  background-color: white !important;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.navbar .nav-link {
+  color: #2c3e50 !important;
+  font-weight: 500;
+}
+
+.navbar .nav-link:hover {
+  color: #4a90e2 !important;
+}
+
+/* Garantir legibilidade em todos os textos */
+.text-muted {
+  color: #6c757d !important;
+}
+
+.alert {
+  color: #2c3e50;
+}
+
+.btn-primary {
+  background-color: #4a90e2;
+  border-color: #4a90e2;
+}
+
+.btn-primary:hover {
+  background-color: #357abd;
+  border-color: #357abd;
+}
+
+/* Cards de status na demo */
+.card.border-success:hover {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.card.border-warning:hover {
+  border-color: #ffc107 !important;
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+.card.border-danger:hover {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.card.border-info:hover {
+  border-color: #17a2b8 !important;
+  box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+
+/* Animações para spinners */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.spinner-border {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Footer - mais suave */
+footer {
+  margin-top: auto;
+  border-top: 1px solid #e1e8ed;
+  background-color: white;
+  color: #6c757d;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+  .jumbotron h1 {
+    font-size: 2rem;
+  }
+  
+  .jumbotron .lead {
+    font-size: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Dark mode support - removido para manter consistência clara */
+@media (prefers-color-scheme: dark) {
+  /* Manter tema claro mesmo em dark mode para melhor legibilidade */
+  body {
+    background-color: #f5f7fa;
+    color: #2c3e50;
+  }
+  
+  .card {
+    background-color: white;
+    border-color: #e1e8ed;
+    color: #2c3e50;
+  }
+  
+  .bg-light {
+    background-color: #f8f9fa !important;
+  }
+}

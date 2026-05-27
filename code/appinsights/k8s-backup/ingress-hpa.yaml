@@ -1,0 +1,93 @@
+# Ingress para exposição externa (opcional)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: northwind-ingress
+  namespace: northwind-demo
+  labels:
+    app: northwind-ecommerce
+  annotations:
+    # Annotations para Azure Application Gateway ou NGINX Ingress
+    kubernetes.io/ingress.class: "azure/application-gateway"
+    appgw.ingress.kubernetes.io/backend-path-prefix: "/"
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+    # Para NGINX Ingress (alternativa)
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - northwind-demo.yourdomain.com
+    secretName: northwind-tls-secret
+  rules:
+  - host: northwind-demo.yourdomain.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: northwind-backend-service
+            port:
+              number: 8000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: northwind-frontend-service
+            port:
+              number: 80
+
+---
+# HorizontalPodAutoscaler para o Backend
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: northwind-backend-hpa
+  namespace: northwind-demo
+  labels:
+    app: northwind-backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: northwind-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# HorizontalPodAutoscaler para o Frontend
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: northwind-frontend-hpa
+  namespace: northwind-demo
+  labels:
+    app: northwind-frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: northwind-frontend
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

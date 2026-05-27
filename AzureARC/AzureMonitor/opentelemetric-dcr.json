@@ -1,0 +1,44 @@
+{
+  "location": "centralus",
+  "properties": {
+    "dataSources": {
+      "performanceCountersOTel": [
+        {
+          "streams": "Microsoft-OtelPerfMetrics",
+          "samplingFrequencyInSeconds": 60,
+          "counterSpecifiers": [
+              "system.filesystem.usage",
+              "system.disk.io",
+              "system.disk.operation_time",
+              "system.disk.operations",
+              "system.memory.usage",
+              "system.network.io",
+              "system.cpu.time",
+              "system.network.dropped",
+              "system.network.errors",
+              "system.uptime"
+          ],
+          "name": "OtelPerfCounters"
+        }
+      ]
+    },
+    "destinations": {
+      "monitoringAccounts": [
+        {
+          "accountResourceId": "/subscriptions/76441293-927b-456f-a04f-6045e4d14b28/resourceGroups/rg-arcservers/providers/Microsoft.Monitor/accounts/azmonworkspace",
+          "name": "MonitoringAccount"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": [
+            "Microsoft-OtelPerfMetrics"
+        ],
+        "destinations": [
+            "MonitoringAccount"
+        ]
+      }
+    ]
+  }
+}

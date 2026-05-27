@@ -1,0 +1,45 @@
+# ConfigMap com configurações da aplicação
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: northwind-config
+  namespace: northwind-demo
+  labels:
+    app: northwind-ecommerce
+data:
+  # Configurações do Backend
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  DEBUG: "false"
+  USE_MANAGED_IDENTITY: "true"  # Default para usar Managed Identity
+  ERROR_PAYMENT_RATE: "15"
+  ERROR_STOCK_RATE: "15"
+  SUCCESS_RATE: "70"
+  
+  # Configurações do Frontend
+  REACT_APP_API_BASE_URL: "http://northwind-backend-service:8000"
+  
+  # Configurações do Load Generator
+  LOAD_USERS: "10"
+  LOAD_SPAWN_RATE: "2"
+  LOAD_DURATION: "300"
+
+---
+# Secret para connection strings e chaves sensíveis
+apiVersion: v1
+kind: Secret
+metadata:
+  name: northwind-secrets
+  namespace: northwind-demo
+  labels:
+    app: northwind-ecommerce
+type: Opaque
+stringData:
+  # Connection String do Banco PostgreSQL (usado quando USE_MANAGED_IDENTITY=false)
+  DATABASE_URL: "postgresql://username:password@your-server.postgres.database.azure.com:5432/northwind"
+  
+  # Connection String do Application Insights
+  APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=your-instrumentation-key;IngestionEndpoint=https://your-region.in.applicationinsights.azure.com/;LiveEndpoint=https://your-region.livediagnostics.monitor.azure.com/"
+  
+  # Connection String para o Frontend
+  REACT_APP_APPINSIGHTS_CONNECTION_STRING: "InstrumentationKey=your-instrumentation-key;IngestionEndpoint=https://your-region.in.applicationinsights.azure.com/;LiveEndpoint=https://your-region.livediagnostics.monitor.azure.com/"

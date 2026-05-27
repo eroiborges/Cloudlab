@@ -564,7 +564,7 @@ CertHealth_CL
 
 ### Parameters — `quote:""` and `delimiter:"|"`
 
-The `ServerName`, `SourceCategory`, and `Severity` multi-select parameters use `quote: ""` (empty) and `delimiter: "|"`. This is required because:
+The `ServerName`, `SourceCategory`, `Severity`, and `Thumbprint` multi-select parameters use `quote: ""` (empty) and `delimiter: "|"`. This is required because:
 
 - `quote: "'"` causes the template `'{Param}'` to expand to `''value''` (double-quoted) — parse error.
 - The KQL filter uses `split()` instead of `in ({Param})` to handle empty selections:
@@ -634,12 +634,31 @@ CertHealth_CL
 
 | # | Alert Name | Severity | Evaluation | Trigger Condition |
 |---|---|---|---|---|
-| 1 | `alert-cert-expiry-critical` | 1 (High) | Every 15 min / 1h window | `Severity in ("Critical","Error")` — expired or ≤30 days |
-| 2 | `alert-cert-expiry-warning` | 2 (Medium) | Every 1h / 2h window | `Severity == "Warning"` — ≤60 days |
-| 3 | `alert-cert-chain-broken` | 1 (High) | Every 15 min / 1h window | `MetricName == "CertChainValid"` and `Value == 0` |
-| 4 | `alert-ca-cert-expiry` | 2 (Medium) | Every 1h / 2h window | CA intermediate cert expiry (Source startswith "CertStore" and Store == "CA") |
-| 5 | `alert-iis-cert-critical` | 1 (High) | Every 15 min / 1h window | IIS-sourced cert expired or ≤30 days |
-| 6 | `alert-collection-error` | 2 (Medium) | Every 1h / 2h window | `Severity == "Error"` from `certcollect.ps1` execution errors |
+| 1 | `alert-cert-expiry-critical` | 1 (High) | Every 15 min / 48h window | `CurrentDaysToExpiry <= 30` (real-time, computed from latest collection) |
+| 2 | `alert-cert-expiry-warning` | 2 (Medium) | Every 1h / 48h window | `CurrentDaysToExpiry > 30 and <= 60` |
+| 3 | `alert-cert-chain-broken` | 1 (High) | Every 15 min / 48h window | `MetricName == "CertChainValid"` and `Value == 0` |
+| 4 | `alert-ca-cert-expiry` | 1 (High) | Every 1h / 48h window | `CurrentDaysToExpiry <= 7` (CA intermediate cert) |
+| 5 | `alert-iis-cert-critical` | 1 (High) | Every 15 min / 48h window | IIS-sourced cert with `CurrentDaysToExpiry <= 30` |
+| 6 | `alert-collection-error` | 3 (Low) | Every 30 min / 48h window | `Event in ("Error", "StoreError", "IMDSError", "MetricPushError")` |
+
+> **Collection interval constraint:** Azure Monitor Scheduled Query Rules enforce a maximum look-back of **48 hours** (API limit, not configurable). The alert evaluation window is set to `P2D` (48h). This means the scheduled task on each VM **must run at least once every 48 hours** for alerts to fire reliably. The default `-IntervalMinutes 1440` (24h) satisfies this. If you increase the interval beyond 2880 minutes (48h), collection data will age out of the evaluation window and alerts will not trigger.
+
+### How the alert queries work
+
+All cert-state alert rules (1–5) use the same pattern instead of filtering on the `Severity` value stored at collection time:
+
+```kql
+CertHealth_CL
+| where MetricName == "CertDaysToExpiry"
+| summarize arg_max(TimeGenerated, *) by Thumbprint        // latest record per cert only
+| extend CurrentDaysToExpiry = Value - (datetime_diff('minute', now(), TimeGenerated) / 1440.0)
+| where CurrentDaysToExpiry <= 30                          // real-time threshold
+```
+
+**Why `arg_max` + real-time calculation instead of stored `Severity`:**
+- Stored `Severity` is computed at collection time. A cert recorded as "Warning" (35 days) one day ago now has ~34 days remaining — still "Warning" by the stored value, but the real current state should be evaluated against the threshold at query time.
+- `arg_max(TimeGenerated, *) by Thumbprint` ensures only the **most recent** collection record per certificate is evaluated, preventing duplicate alert instances from multiple collection runs.
+- `CurrentDaysToExpiry` subtracts elapsed time since collection so the threshold comparison always reflects the certificate's actual remaining life.
 
 ### Alert dimension splits
 

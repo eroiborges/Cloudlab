@@ -1,0 +1,114 @@
+# Deployment do Load Generator
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: northwind-loadgen
+  namespace: northwind-demo
+  labels:
+    app: northwind-loadgen
+    component: testing
+    tier: tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: northwind-loadgen
+  template:
+    metadata:
+      labels:
+        app: northwind-loadgen
+        component: testing
+        tier: tools
+    spec:
+      containers:
+      - name: loadgen
+        image: your-acr.azurecr.io/northwind-loadgen:latest
+        ports:
+        - containerPort: 8089
+          name: web-ui
+        envFrom:
+        - configMapRef:
+            name: northwind-config
+        env:
+        - name: LOAD_TARGET_URL
+          value: "http://northwind-backend-service:8000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+---
+# Service para o Load Generator
+apiVersion: v1
+kind: Service
+metadata:
+  name: northwind-loadgen-service
+  namespace: northwind-demo
+  labels:
+    app: northwind-loadgen
+    component: testing
+spec:
+  selector:
+    app: northwind-loadgen
+  ports:
+  - port: 8089
+    targetPort: 8089
+    protocol: TCP
+    name: web-ui
+  type: LoadBalancer  # Para acessar a UI do Locust externamente
+
+---
+# Job para execução única de teste de carga
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: northwind-loadtest-job
+  namespace: northwind-demo
+  labels:
+    app: northwind-loadgen
+    component: testing
+    type: job
+spec:
+  ttlSecondsAfterFinished: 600  # Remove job após 10 minutos
+  template:
+    metadata:
+      labels:
+        app: northwind-loadgen
+        component: testing
+        type: job
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: loadtest
+        image: your-acr.azurecr.io/northwind-loadgen:latest
+        command: ["python", "locustfile.py"]
+        envFrom:
+        - configMapRef:
+            name: northwind-config
+        env:
+        - name: LOAD_TARGET_URL
+          value: "http://northwind-backend-service:8000"
+        - name: LOAD_USERS
+          value: "20"
+        - name: LOAD_SPAWN_RATE
+          value: "5"
+        - name: LOAD_DURATION
+          value: "180"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

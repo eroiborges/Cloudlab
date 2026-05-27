@@ -1,0 +1,101 @@
+# Deployment do Backend FastAPI
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: northwind-backend
+  namespace: northwind-demo
+  labels:
+    app: northwind-backend
+    component: api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: northwind-backend
+  template:
+    metadata:
+      labels:
+        app: northwind-backend
+        component: api
+        tier: backend
+      annotations:
+        # Habilita injeção de Application Insights
+        instrumentation.opentelemetry.io/inject-python: "true"
+    spec:
+      serviceAccountName: northwind-backend-sa
+      containers:
+      - name: api
+        image: your-acr.azurecr.io/northwind-backend:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: northwind-config
+        - secretRef:
+            name: northwind-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+---
+# Service para o Backend
+apiVersion: v1
+kind: Service
+metadata:
+  name: northwind-backend-service
+  namespace: northwind-demo
+  labels:
+    app: northwind-backend
+    component: api
+spec:
+  selector:
+    app: northwind-backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+# ServiceAccount para o Backend (para Managed Identity)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: northwind-backend-sa
+  namespace: northwind-demo
+  labels:
+    app: northwind-backend
+  annotations:
+    # Associa com User-Assigned Managed Identity (se necessário)
+    azure.workload.identity/client-id: "your-managed-identity-client-id"

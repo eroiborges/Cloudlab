@@ -202,6 +202,15 @@
     echo "==== Concluído com sucesso. ===="
 
     ```
+### VM Jump Server
+
+1. Criar uma VM Windows para uso inicial dos teste do laboratio.
+
+    ```
+    az vm create --resource-group $rgnameop --name vmjump --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-g2:latest --size $vmsize --storage-sku StandardSSD_ZRS --vnet-name $op_vnetname --private-ip-address 10.150.0.4cmd
+     --subnet ophosts --nsg "" --nsg-rule None --public-ip-address "" --authentication-type password --admin-username localadmin  --admin-password $admpasswd
+    ```
+
 ### VNET Log Flow
 
 7. Ativar o envio dos logs de VNET para o Workspace.

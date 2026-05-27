@@ -30,7 +30,7 @@
 
       + Rule Name: fsidayzone
       + Domain Name: fsiday.local.
-      + Destination IP Address: 10.150.0.4 (IP do servidor Windows)
+      + Destination IP Address: IP do servidor Windows Jumpserver (DNS server)
 
 5. Testar a resolução dos nomes de zonas privadas conectadas a NET Azure (PGSQL \ Storage Account)
 

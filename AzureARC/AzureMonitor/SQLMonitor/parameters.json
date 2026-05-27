@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "value": "law-sqlmonitor-prod"
+    },
+    "workspaceRetentionDays": {
+      "value": 30
+    },
+    "actionGroupName": {
+      "value": "ag-sql-monitor"
+    },
+    "actionGroupShortName": {
+      "value": "SQLMonAlert"
+    },
+    "alertEmailAddress": {
+      "value": "eroi@eroi.eti.br"
+    },
+    "environment": {
+      "value": "production"
+    },
+    "ownerTag": {
+      "value": "IT-Operations"
+    }
+  }
+}

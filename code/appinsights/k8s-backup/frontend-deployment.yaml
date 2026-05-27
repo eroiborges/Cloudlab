@@ -1,0 +1,88 @@
+# Deployment do Frontend React
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: northwind-frontend
+  namespace: northwind-demo
+  labels:
+    app: northwind-frontend
+    component: web
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: northwind-frontend
+  template:
+    metadata:
+      labels:
+        app: northwind-frontend
+        component: web
+        tier: frontend
+    spec:
+      containers:
+      - name: web
+        image: your-acr.azurecr.io/northwind-frontend:latest
+        ports:
+        - containerPort: 80
+          name: http
+        envFrom:
+        - configMapRef:
+            name: northwind-config
+        - secretRef:
+            name: northwind-secrets
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 101  # nginx user
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+
+---
+# Service para o Frontend
+apiVersion: v1
+kind: Service
+metadata:
+  name: northwind-frontend-service
+  namespace: northwind-demo
+  labels:
+    app: northwind-frontend
+    component: web
+spec:
+  selector:
+    app: northwind-frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  type: LoadBalancer  # Ou ClusterIP se usar Ingress
