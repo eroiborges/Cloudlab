@@ -1,3 +1,4 @@
+#files to ignore in the repository
 AzureARC/MSI/instructions.md
-TODO.html
-AzureARC/AzureMonitor/SCOM - Microsoft SQL Server
+
+# folders to ignore in the repository
