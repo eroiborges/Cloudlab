@@ -335,19 +335,6 @@ $pwd = Read-Host -AsSecureString 'svc-certmonitor password'
 .\Install-CertMonitor.ps1 -RunAsUser 'DOMAIN\svc-certmonitor$'
 ```
 
-### PowerShell portability skill
-
-To keep scripts compatible across Windows PowerShell 5.1, PowerShell 7+, and remote copy/edit workflows, use the portability checklist in:
-
-- `./skills/powershell-portability/SKILL.md`
-
-This checklist includes:
-
-- ASCII-only script content (no smart punctuation)
-- strict parser validation before deployment
-- simple quoting patterns for string interpolation
-- minimal dependency usage and compatibility-safe cmdlets
-
 ### Verify log file
 
 After the first run (triggered automatically by `Install-CertMonitor.ps1`):
