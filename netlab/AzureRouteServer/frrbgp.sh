@@ -11,6 +11,10 @@ sudo sed -i 's/^bgpd=no/bgpd=yes/' /etc/frr/daemons
 sudo systemctl restart frr
 sleep 5
 
+# Ativar IP forwarding
+sysctl -w net.ipv4.ip_forward=1
+sed -i 's/^#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+
 #Router 1 (AS 65001)
 sudo vtysh << EOF
 configure terminal
