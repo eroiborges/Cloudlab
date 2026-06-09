@@ -29,6 +29,10 @@
 | Segurança | Backup |  | OADP | Azure Backup for AKS (extensão Velero) | Definir RPO/RTO por namespace e validar restore em ambiente de teste. | [Azure Backup for AKS](https://learn.microsoft.com/en-us/azure/backup/azure-kubernetes-service-backup-overview) |
 | Storage | CSI Drivers | CEPH | - | Azure Disk CSI + Azure File CSI (+ Snapshot CSI) | Padronizar storage class por workload: bloco para banco e file share para compartilhamento. | [CSI drivers on AKS](https://learn.microsoft.com/en-us/azure/aks/csi-storage-drivers) |
 | Storage | Storage Backends | CEPH NFS GPFS Vsphere | Azure Disk Azure Files (SMB/NFS) | Azure Disk, Azure Files (SMB/NFS), Azure NetApp Files (quando necessario) | Definir tiers por IOPS/latencia e politica de backup por classe de dado. | [Storage options for AKS](https://learn.microsoft.com/en-us/azure/aks/concepts-storage) |
+| Arquitetura | Autoscaler Nodes | Cluster Autoscaling | Cluster Autoscaling | Autoscaler / Node Auto Provisioning | Autoscaler para nodepools imutáveis e NAP para nodepools mistos com foco em densidade computacional e otimização de custos. | [Node auto-provisioning in Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/node-auto-provisioning)<BR><BR>[Cluster autoscaling in Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/cluster-autoscaler-overview) |
+| Arquitetura | Autoscaler Workloads | HPA / VPA | HPA / VPA | HPA / VPA / Keda | HPA e VPA seguem o mesmo conceito. Addon oficial Keda para escala baseada em uso real e eventos através de custom métrics | [Kubernetes Event-driven Autoscaling](https://learn.microsoft.com/en-us/azure/aks/keda-about)<BR><BR>[Autoscale pods](https://learn.microsoft.com/en-us/azure/aks/tutorial-kubernetes-scale?tabs=azure-cli#autoscale-pods)<BR><BR>[Vertical Pod Autoscaler in Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/use-vertical-pod-autoscaler) |
+| Arquitetura | Hosted Control Plane  | Não | Não | Free / Standard / Premium | Control plane 100% gerenciado pela Microsoft. SKUs definem SLA, tempo de suporte e sizing. | [AKS Control Plane](https://learn.microsoft.com/en-us/azure/aks/core-aks-concepts#control-plane)<BR><BR>[AKS pricing tiers](https://learn.microsoft.com/en-us/azure/aks/free-standard-pricing-tiers) |
+| Arquitetura | Arquitetura Ativo-Ativo  | Balanceamento via F5 entre todos os infra nodes (Router) | Balanceamento via Application Gateway entre os NLB de cada cluster ARO | Exposição via Traffic Manager, Frontdoor ou multi-cluster networking com Fleet-Manager | Configuração manual de entry-point ou gerenciado com fleet-manager. | [AKS active-active high availability solution overview](https://learn.microsoft.com/en-us/azure/aks/active-active-solution)<BR><BR>[Fleet Manager multi-cluster networking overview](https://learn.microsoft.com/en-us/azure/kubernetes-fleet/concepts-multi-cluster-networking-overview) |
 | Service Mesh | Tecnologia | Openshift Service Mesh 2.x | Openshift Service Mesh 2.x | Istio OSS (add-on) ou Open Service Mesh (legado) | Adotar mesh por necessidade real de mTLS, traffic shaping e observabilidade L7. | [Istio add-on for AKS](https://learn.microsoft.com/en-us/azure/aks/istio-about) |
 | Governança | Finops |  | Apptio | Apptio + Azure Cost Management + tagging strategy | Medir custo por cluster, node pool e namespace com labels/tags padronizadas. | [AKS cost optimization](https://learn.microsoft.com/en-us/azure/aks/best-practices-cost) |
 
@@ -63,7 +67,12 @@
 - Storage classes com Azure Disk e Azure Files (SMB/NFS) por tipo de workload.
 - Estratégia de backup com Velero + snapshots de volume e retenção por criticidade.
 
-### Trilha 6 - Service Mesh
+### Trilha 6 - Arquitetura
+- Autoscaling de Nodes e Workloads
+- SKUs do Control Plane
+- Posibilidades de arquitetura Ativo-Ativo
+
+### Trilha 7 - Service Mesh
 - Istio OSS no AKS para cenários que exigem mTLS, roteamento avançado e observabilidade de tráfego.
 - Definir critério de adoção: usar mesh apenas para workloads que realmente precisam.
 
