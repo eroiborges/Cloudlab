@@ -17,10 +17,11 @@ AZCli versions used:
 ## Cloud Network LABs
 
 1. [Azure networking routing using a HUB & Spoke + VPN.](./netlab/lab1.md)
+2. [Air-gapped workload in a non-routable network](./netlab/airgap-workload/readme.md) - Terraform lab with HUB, SpokeHub and non-routable Spoke, Azure Firewall, Application Gateway, private Web App publishing and external DNS integration
 
-## Training Day
+## Azure Infrastructure LABs
 
-1. [AI Infrastructure Workshop](./TrainingDay/README.md) - Practical workshop for designing infrastructure to support AI projects
+1. [Azure Functions on Azure Container Apps and Azure Kubernetes Service](./ContainerFunction/README.md) - Terraform lab with a shared foundation and independent deployment options for ACA, AKS or both
 
 ## Code Folder
 

@@ -1,6 +1,6 @@
 export rgnameaz="rg-vxlanlab"
 export location="centralus" 
-export vmsize="standard_b2ms" #"Standard_B4ms" #"Standard_D2ads_v5" #"Standard_D2s_v5"
+export vmsize="Standard_D2s_v5" #standard_b2ms" #"Standard_B4ms" #"Standard_D2ads_v5" #"Standard_D2s_v5"
 export az_vnetname="lab-azvnet"
 
 az group create --name $rgnameaz --location $location
@@ -20,6 +20,21 @@ for i in 140 150 160 161; do
   esac  
 
 done
+
+# Gateway Subnet
+#az network vnet subnet create --name 'GatewaySubnet' --resource-group $rgnameaz --vnet-name $az_vnetname"160" --address-prefixes 10.160.0.64/26
+
+# Virtual Network Gateway IP and Gateway
+#az network public-ip create --resource-group $rgnameaz --name 'vnetgw-ip' --location $location --allocation-method Static --sku Standard --zone 1 2 3
+#az network vnet-gateway create --name 'vnetgw' --resource-group $rgnameaz --location $location --vnet $az_vnetname"150" --public-ip-address 'vnetgw-ip' --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1AZ --asn 65516 --no-wait
+
+# local network gateway
+#az network local-gateway create --name 'localgw' --resource-group $rgnameaz --location $location --gateway-ip-address 189.33.66.180 --local-address-prefixes 192.168.202.0/24
+
+# VPN connection
+#az network vpn-connection create --name 'vpnconn' --resource-group $rgnameaz --vnet-gateway1 'vnetgw' --local-gateway2 'localgw' --shared-key 'MySharedKey123'
+
+
 
 export hub_vnetnameid=$(az network vnet show --resource-group $rgnameaz --name $az_vnetname"150" -o tsv --query id)
 export spoke140_vnetnameid=$(az network vnet show --resource-group $rgnameaz --name $az_vnetname"140" -o tsv --query id)

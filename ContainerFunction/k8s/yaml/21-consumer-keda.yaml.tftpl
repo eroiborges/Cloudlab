@@ -1,0 +1,42 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: ${consumer_deployment_name}-servicebus-auth
+  namespace: ${namespace}
+spec:
+  podIdentity:
+    provider: azure-workload
+    identityId: "${consumer_client_id}"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ${consumer_deployment_name}
+  namespace: ${namespace}
+  labels:
+    app: ${consumer_deployment_name}
+spec:
+  scaleTargetRef:
+    name: ${consumer_deployment_name}
+  pollingInterval: ${polling_interval_seconds}
+  cooldownPeriod: ${cooldown_period_seconds}
+  minReplicaCount: ${consumer_min_replicas}
+  maxReplicaCount: ${consumer_max_replicas}
+  fallback:
+    failureThreshold: ${fallback_failure_threshold}
+    replicas: ${fallback_replicas}
+  advanced:
+    restoreToOriginalReplicaCount: false
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: ${scale_down_stabilization}
+  triggers:
+    - type: azure-servicebus
+      metadata:
+        namespace: ${service_bus_namespace}
+        queueName: ${service_bus_queue}
+        messageCount: "${message_count}"
+        activationMessageCount: "${activation_message_count}"
+      authenticationRef:
+        name: ${consumer_deployment_name}-servicebus-auth

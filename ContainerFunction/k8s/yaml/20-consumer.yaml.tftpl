@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${consumer_service_account_name}
+  namespace: ${namespace}
+  annotations:
+    azure.workload.identity/client-id: "${consumer_client_id}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${consumer_deployment_name}
+  namespace: ${namespace}
+  labels:
+    app: ${consumer_deployment_name}
+spec:
+  replicas: ${consumer_replicas}
+  selector:
+    matchLabels:
+      app: ${consumer_deployment_name}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ${consumer_deployment_name}
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: ${consumer_service_account_name}
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: ${consumer_container_name}
+          image: "${acr_login_server}/${consumer_image_repository}:${consumer_image_tag}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: ${consumer_container_port}
+              protocol: TCP
+          env:
+            - name: AzureWebJobsStorage__blobServiceUri
+              value: "https://${storage_name}.blob.core.windows.net"
+            - name: AzureWebJobsStorage__queueServiceUri
+              value: "https://${storage_name}.queue.core.windows.net"
+            - name: AzureWebJobsStorage__tableServiceUri
+              value: "https://${storage_name}.table.core.windows.net"
+            - name: AzureWebJobsStorage__credential
+              value: managedidentity
+            - name: AzureWebJobsStorage__clientId
+              value: "${consumer_client_id}"
+            - name: ServiceBusConnection__fullyQualifiedNamespace
+              value: "${service_bus_namespace}.servicebus.windows.net"
+            - name: ServiceBusConnection__credential
+              value: managedidentity
+            - name: ServiceBusConnection__clientId
+              value: "${consumer_client_id}"
+            - name: AzureFunctionsWebHost__hostid
+              value: "${consumer_host_id}"
+            - name: AzureWebJobsSecretStorageType
+              value: blob
+          resources:
+            requests:
+              cpu: "${consumer_cpu_request}"
+              memory: "${consumer_memory_request}"
+            limits:
+              cpu: "${consumer_cpu_limit}"
+              memory: "${consumer_memory_limit}"
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: ${startup_period_seconds}
+            failureThreshold: ${startup_failure_threshold}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: ${readiness_period_seconds}
+            timeoutSeconds: ${readiness_timeout_seconds}
+            failureThreshold: ${readiness_failure_threshold}
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: ${liveness_period_seconds}
+            timeoutSeconds: ${liveness_timeout_seconds}
+            failureThreshold: ${liveness_failure_threshold}

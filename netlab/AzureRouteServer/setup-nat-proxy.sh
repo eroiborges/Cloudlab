@@ -19,6 +19,21 @@ iptables -t nat -F
 # Habilitar NAT (masquerade) para saída pela interface untrust
 iptables -t nat -A POSTROUTING -o "$IF_UNTRUST" -j MASQUERADE
 
+## LAB2
+iptables -t nat -A POSTROUTING -s 192.168.202.0/24 -d 192.168.200.0/24 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 192.168.202.0/24 -d 192.168.201.0/24 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 192.168.202.0/24 -d 192.168.202.0/24 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 192.168.202.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -I POSTROUTING 1 -s 192.168.202.0/24 -d 10.150.0.0/20 -j ACCEPT
+iptables -t nat -L POSTROUTING -n -v --line-numbers
+
+iptables -L -n -v
+iptables -t nat -L -n -v
+iptables -t mangle -L -n -v
+iptables -S
+iptables -t nat -S
+
+
 # Permitir encaminhamento entre as interfaces
 iptables -A FORWARD -i "$IF_TRUST" -o "$IF_UNTRUST" -j ACCEPT
 iptables -A FORWARD -i "$IF_UNTRUST" -o "$IF_TRUST" -m state --state RELATED,ESTABLISHED -j ACCEPT
